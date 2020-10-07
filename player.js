@@ -1,16 +1,20 @@
 class Player {
-    constructor (x, y, w, h, c) {
+    constructor(x, y, w, h, c) {
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
         this.c = c;
 
+        this.score;
+
         this.dy = 0;
         this.jumpForce = 15;
         this.originalHeight = h;
         this.grounded = false;
         this.jumpTimer = 0;
+
+        this.brain = new NeuralNetwork(7, 10, 2);
     }
 
     jump() {
@@ -27,8 +31,36 @@ class Player {
         this.h = this.originalHeight / 2;
     }
 
+    think(obstacle) {
+        //#region
+            let inputs = [
+                this.y / canvas.height,
+                this.dy / 10,
+                obstacle.l / canvas.height,
+                obstacle.w / canvas.width,
+                obstacle.x / canvas.width,
+                obstacle.y / canvas.height,
+                obstacle.dx / 10           
+            ];
+        //#endregion 
+        let output = this.brain.predict(inputs);
+        
+        if (output[0] > 0.5) {
+            this.jump();
+        } else {
+            this.jumpTimer = 0;
+        }
+
+        if (output[1] > 0.5) {
+            this.crouch();
+        } else {
+            this.h = this.originalHeight;
+        }
+    }
+
     update() { 
         
+        /*
         if (keys['Space'] || keys['KeyW']) {
             this.jump();
         } else {
@@ -40,6 +72,7 @@ class Player {
         } else {
             this.h = this.originalHeight;
         }
+        */
         
         this.y += this.dy;
 

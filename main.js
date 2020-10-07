@@ -7,14 +7,13 @@
 
     // game objects
     let obstacles = [];
-    let player;
+    let players = [];
     let scoreText;
     let highscoreText;
 
     // game variables
     let spawnTimer;
     let initialSpawnTimer = 200;
-    let score;
     let highscore = 0;
     let gravity = 1;
     let gameSpeed = 3;
@@ -70,7 +69,6 @@ class Text {
     function reset() {
         spawnTimer = 150;
         gameSpeed = 3;
-        score = 0;
         obstacles = [];
     }
 
@@ -104,6 +102,8 @@ function Start() {
     canvas.width = 1400;
     canvas.height = 400;
     ctx.font = "20px sans-serif";
+
+    tf.setBackend('cpu');
 
     //fps setup
     fpsInterval = 1000 / fps;

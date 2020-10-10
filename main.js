@@ -17,6 +17,7 @@
     let highscore = 0;
     let gravity = 1;
     let gameSpeed = 3;
+    let score = 0;
 
     // other
     let keys = {};
@@ -70,6 +71,7 @@ class Text {
         spawnTimer = 150;
         gameSpeed = 3;
         obstacles = [];
+        score = 0;
     }
 
     function set() {
@@ -87,14 +89,26 @@ class Text {
         player = new Player(25, 0, 50, 50, '#FF5858');
     }
 
-    function playerCollision(item) {
-        if (player.x < item.x + item.w && player.x + player.w > item.x &&
-            player.y < item.y + item.h && player.y + player.h > item.y) 
+    function playerCollision(obstacle, player) {
+        if (player.x < obstacle.x + obstacle.w && player.x + player.w > obstacle.x &&
+            player.y < obstacle.y + obstacle.h && player.y + player.h > obstacle.y) 
         {
             return true;
         } else {
             return false;
         }
+    }
+
+    function closestObstacle(player) {
+        let closest = obstacles[0];
+
+        for (let i = 1; i < obstacles.length; i++) {
+            if (obstacles[i] < closest && obstacles[i] > player.x - player.w) {
+                closest = obstacles[i];
+                console.log(closest);
+            }
+        }
+        return(closest);
     }
 //#endregion
 
@@ -140,13 +154,17 @@ function Update() {
             }
         }
 
+        if (obstacles.length != 0) {
+            player.think(closestObstacle(player));
+        }
+
         for (let i = 0; i < obstacles.length; i++) {
             let o = obstacles[i];
 
             if (o.x + o.w < 0) {
                 obstacles.splice(i, 1);
             }
-            if (playerCollision(o)) {
+            if (playerCollision(o, player)) {
                 reset();
             }
             o.update();

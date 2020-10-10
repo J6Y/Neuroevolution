@@ -14,7 +14,7 @@ class Player {
         this.grounded = false;
         this.jumpTimer = 0;
 
-        this.brain = new NeuralNetwork(7, 10, 2);
+        this.brain = new NeuralNetwork(6, 10, 2);
     }
 
     jump() {
@@ -36,7 +36,6 @@ class Player {
             let inputs = [
                 this.y / canvas.height,
                 this.dy / 10,
-                obstacle.l / canvas.height,
                 obstacle.w / canvas.width,
                 obstacle.x / canvas.width,
                 obstacle.y / canvas.height,

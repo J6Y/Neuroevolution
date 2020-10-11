@@ -10,11 +10,13 @@
     let players = [];
     let scoreText;
     let highscoreText;
+    let genText;
     let closestObstacle;
 
     // nn variables
     let playerCount = 100;
     let aliveCount = 0;
+    let genNumber = 0;
 
     // game variables
     let spawnTimer;
@@ -107,6 +109,13 @@ class Text {
             aliveCount += 1;
         }
     }
+
+    function newGen() {
+        
+        genNumber++;
+        
+        initPlayers();
+    }
 //#endregion
 
 function Start() {
@@ -122,8 +131,11 @@ function Start() {
     startTime = then;
 
     //game setup
+
+    genText = new Text("Generation " + genNumber, 25, 25, "left", "#212121", "20");
+
     set();
-    initPlayers();
+    newGen();
     
     requestAnimationFrame(Update);
 }
@@ -163,20 +175,23 @@ function Update() {
             }
         }
 
-        if (players.length == 0) {
-            //initPlayers();
+        if (aliveCount <= 0) {
+            newGen();
         }
 
         for (let i = 0; i < players.length; i++) {
             let p = players[i];
 
-            if (obstacles.length != 0) {
-                if (checkCollision(closestObstacle, p)) {
-                    p.isDead = true;
-                }
-            }
-
             if (p.isDead == false) {
+
+                if (obstacles.length != 0) {
+                    if (checkCollision(closestObstacle, p)) {
+                        p.isDead = true;
+                        aliveCount-=1;
+                        console.log(aliveCount);
+                    }
+                }
+
                 if (obstacles.length != 0) {
                     p.think(closestObstacle);
                 }
@@ -200,6 +215,9 @@ function Update() {
         
         highscoreText.display();
         */
+
+        genText.t = "Generation " + genNumber;
+        genText.display();
 
         gameSpeed += 0.0005;
     }

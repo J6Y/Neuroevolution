@@ -1,18 +1,18 @@
 class Player {
-    constructor(x, y, w, h, c) {
+    constructor(x, y, s, c) {
         this.x = x;
         this.y = y;
-        this.w = w;
-        this.h = h;
-        this.c = c;
+        this.size = s;
+        this.height = s;
+        this.colour = c;
 
-        this.score;
-
-        this.dy = 0;
+        this.speed = 0;
         this.jumpForce = 15;
-        this.originalHeight = h;
-        this.grounded = false;
         this.jumpTimer = 0;
+        this.grounded = false;
+
+        this.score = 0;
+        this.isDead = false;
 
         this.brain = new NeuralNetwork(6, 10, 2);
     }
@@ -23,23 +23,23 @@ class Player {
             this.dy = -this.jumpForce;
         } else if (this.jumpTimer > 0 && this.jumpTimer < 15) {
             this.jumpTimer++;
-            this.dy = -this.jumpForce - (this.jumpTimer / 50);
+            this.speed = -this.jumpForce - (this.jumpTimer / 50);
         }
     }
 
     crouch() {
-        this.h = this.originalHeight / 2;
+        this.height = this.size / 2;
     }
 
     think(obstacle) {
         //#region
             let inputs = [
                 this.y / canvas.height,
-                this.dy / 10,
-                obstacle.w / canvas.width,
-                obstacle.x / canvas.width,
+                this.speed / 10,
                 obstacle.y / canvas.height,
-                obstacle.dx / 10           
+                obstacle.height / canvas.height,
+                obstacle.width / canvas.width,
+                obstacle.speed / 10           
             ];
         //#endregion 
         let output = this.brain.predict(inputs);
@@ -53,36 +53,22 @@ class Player {
         if (output[1] > 0.5) {
             this.crouch();
         } else {
-            this.h = this.originalHeight;
+            this.height = this.size;
         }
     }
 
     update() { 
         
-        /*
-        if (keys['Space'] || keys['KeyW']) {
-            this.jump();
-        } else {
-            this.jumpTimer = 0;
-        }
-
-        if (keys['ShiftLeft'] || keys['KeyS']) {
-            this.crouch();
-        } else {
-            this.h = this.originalHeight;
-        }
-        */
-        
-        this.y += this.dy;
+        this.y += this.speed;
 
         //Gravity
-        if (this.y + this.h < canvas.height) {
-            this.dy += gravity;
+        if (this.y + this.height < canvas.height) {
+            this.speed += gravity;
             this.grounded = false;
         } else {
-            this.dy = 0;
+            this.speed = 0;
             this.grounded = true;
-            this.y = canvas.height - this.h;
+            this.y = canvas.height - this.height;
         }
 
         this.display();
@@ -90,8 +76,8 @@ class Player {
 
     display() {
         ctx.beginPath();
-        ctx.fillStyle = this.c;
-        ctx.fillRect(this.x, this.y, this.w, this.h);
+        ctx.fillStyle = this.colour;
+        ctx.fillRect(this.x, this.y, this.size, this.height);
         ctx.closePath();
     }
 }

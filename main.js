@@ -10,6 +10,11 @@
     let players = [];
     let scoreText;
     let highscoreText;
+    let closestObstacle;
+
+    // nn variables
+    let playerCount = 100;
+    let aliveCount = 0;
 
     // game variables
     let spawnTimer;
@@ -17,21 +22,15 @@
     let highscore = 0;
     let gravity = 1;
     let gameSpeed = 3;
-    let score = 0;
+
+    // spawn variables
+    let playerS = 50;
+    let playerY = 0;
+    let playerX = 25;
 
     // other
     let keys = {};
     let fps = 60;
-//#endregion
-
-// Event Listeners
-//#region 
-    document.addEventListener('keydown', function (evt) {
-        keys[evt.code] = true;
-    });
-    document.addEventListener('keyup', function (evt) {
-        keys[evt.code] = false;
-    });
 //#endregion
 
 class Text {
@@ -62,7 +61,7 @@ class Text {
         let obstacle = new Obstacle(canvas.width + size, canvas.height - size, size, size, '#2484E4');
       
         if (type == 1) {
-          obstacle.y -= player.originalHeight - 10;
+          obstacle.y -= playerS - 10;
         }
         obstacles.push(obstacle);
     }
@@ -71,7 +70,6 @@ class Text {
         spawnTimer = 150;
         gameSpeed = 3;
         obstacles = [];
-        score = 0;
     }
 
     function set() {
@@ -83,32 +81,31 @@ class Text {
         }
 
         //add score text
-        scoreText = new Text("Score: " + score, 25, 25, "left", "#212121", "20");
-        highscoreText = new Text("Highscore: " + highscore, canvas.width - 25, 25, "right", "#212121", "20");
+        //scoreText = new Text("Score: " + score, 25, 25, "left", "#212121", "20");
+        //highscoreText = new Text("Highscore: " + highscore, canvas.width - 25, 25, "right", "#212121", "20");
 
-        player = new Player(25, 0, 50, 50, '#FF5858');
     }
 
-    function playerCollision(obstacle, player) {
-        if (player.x < obstacle.x + obstacle.w && player.x + player.w > obstacle.x &&
-            player.y < obstacle.y + obstacle.h && player.y + player.h > obstacle.y) 
+    function checkCollision(obstacle, player) {
+        if (player.x < obstacle.x + obstacle.width && 
+            player.y < obstacle.y + obstacle.height &&
+            obstacle.x < player.x + player.size && 
+            obstacle.y < player.y + player.height ) 
         {
             return true;
         } else {
             return false;
         }
     }
+//#endregion
 
-    function closestObstacle(player) {
-        let closest = obstacles[0];
-
-        for (let i = 1; i < obstacles.length; i++) {
-            if (obstacles[i] < closest && obstacles[i] > player.x - player.w) {
-                closest = obstacles[i];
-                console.log(closest);
-            }
+// NN Implementation Functions
+//#region
+    function initPlayers() {
+        for (let i = 0; i < playerCount; i++) {
+            players[i] = new Player(playerX, playerY, playerS, '#FF5858'); 
+            aliveCount += 1;
         }
-        return(closest);
     }
 //#endregion
 
@@ -126,6 +123,7 @@ function Start() {
 
     //game setup
     set();
+    initPlayers();
     
     requestAnimationFrame(Update);
 }
@@ -146,7 +144,6 @@ function Update() {
         spawnTimer--;
         if (spawnTimer <= 0) {
             spawnObstacle();
-            console.log(obstacles);
             spawnTimer = initialSpawnTimer - gameSpeed * 8;
             
             if (spawnTimer < 60) {
@@ -155,23 +152,43 @@ function Update() {
         }
 
         if (obstacles.length != 0) {
-            player.think(closestObstacle(player));
+            if (obstacles[0].x + obstacles[0].width < 0) {
+                obstacles.splice(0, 1);
+            }
+
+            if (obstacles[0].x > playerX - playerS) {
+                closestObstacle = obstacles[0];
+            } else {
+                closestObstacle = obstacles[1];
+            }
+        }
+
+        if (players.length == 0) {
+            //initPlayers();
+        }
+
+        for (let i = 0; i < players.length; i++) {
+            let p = players[i];
+
+            if (obstacles.length != 0) {
+                if (checkCollision(closestObstacle, p)) {
+                    p.isDead = true;
+                }
+            }
+
+            if (p.isDead == false) {
+                if (obstacles.length != 0) {
+                    p.think(closestObstacle);
+                }
+                p.update();
+            }
         }
 
         for (let i = 0; i < obstacles.length; i++) {
-            let o = obstacles[i];
-
-            if (o.x + o.w < 0) {
-                obstacles.splice(i, 1);
-            }
-            if (playerCollision(o, player)) {
-                reset();
-            }
-            o.update();
+            obstacles[i].update();
         }
 
-        player.update();
-
+        /*
         score++;
         scoreText.t = "Score: " + score;
         scoreText.display();
@@ -182,6 +199,7 @@ function Update() {
         }
         
         highscoreText.display();
+        */
 
         gameSpeed += 0.0005;
     }

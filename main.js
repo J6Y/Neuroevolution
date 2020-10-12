@@ -1,44 +1,45 @@
 //Restructure of old project with Neuroevolution implemented
 
-// Vairables 
-//#region 
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
+// Vairables
+//#region
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-    // game objects
-    let obstacles = [];
-    let players = [];
-    let scoreText;
-    let highscoreText;
-    let genText;
-    let genScoreText;
-    let closestObstacle;
+// game objects
+let obstacles = [];
+let players = [];
+let lastPlayers = [];
+let scoreText;
+let highscoreText;
+let genText;
+let genScoreText;
+let closestObstacle;
 
-    // nn variables
-    let playerCount = 100;
-    let aliveCount = 0;
-    let gen = 0;
-    let genScore;
+// nn variables
+let playerCount = 100;
+let aliveCount = 0;
+let gen = 0;
+let genScore;
 
-    // game variables
-    let spawnTimer;
-    let initialSpawnTimer = 200;
-    let highscore = 0;
-    let gravity = 1;
-    let gameSpeed = 3;
+// game variables
+let spawnTimer;
+let initialSpawnTimer = 200;
+let highscore = 0;
+let gravity = 1;
+let gameSpeed = 3;
 
-    // spawn variables
-    let playerS = 50;
-    let playerY = 0;
-    let playerX = 25;
+// spawn variables
+let playerS = 50;
+let playerY = 0;
+let playerX = 25;
 
-    // other
-    let keys = {};
-    let fps = 60;
+// other
+let keys = {};
+let fps = 60;
 //#endregion
 
 class Text {
-    constructor (t, x, y, a, c, s) {
+    constructor(t, x, y, a, c, s) {
         this.t = t;
         this.x = x;
         this.y = y;
@@ -59,25 +60,31 @@ class Text {
 
 // Game Functions
 //#region
-    function spawnObstacle() {
-        let size = RandomIntInRange(20, 70);
-        let type = RandomIntInRange(0, 1);
-        let obstacle = new Obstacle(canvas.width + size, canvas.height - size, size, size, '#2484E4');
-      
-        if (type == 1) {
-          obstacle.y -= playerS - 10;
-        }
-        obstacles.push(obstacle);
-    }
+function spawnObstacle() {
+    let size = RandomIntInRange(20, 70);
+    let type = RandomIntInRange(0, 1);
+    let obstacle = new Obstacle(
+        canvas.width + size,
+        canvas.height - size,
+        size,
+        size,
+        "#2484E4"
+    );
 
-    function reset() {
-        spawnTimer = 150;
-        gameSpeed = 3;
-        obstacles = [];
-        genScore = 0;
+    if (type == 1) {
+        obstacle.y -= playerS - 10;
     }
+    obstacles.push(obstacle);
+}
 
-    /*
+function reset() {
+    spawnTimer = 150;
+    gameSpeed = 3;
+    obstacles = [];
+    genScore = 0;
+}
+
+/*
     function set() {
         reset();
 
@@ -91,44 +98,68 @@ class Text {
     }
     */
 
-    function checkCollision(obstacle, player) {
-        if (player.x < obstacle.x + obstacle.width && 
-            player.y < obstacle.y + obstacle.height &&
-            obstacle.x < player.x + player.size && 
-            obstacle.y < player.y + player.height ) 
-        {
-            return true;
-        } else {
-            return false;
-        }
+function checkCollision(obstacle, player) {
+    if (
+        player.x < obstacle.x + obstacle.width &&
+        player.y < obstacle.y + obstacle.height &&
+        obstacle.x < player.x + player.size &&
+        obstacle.y < player.y + player.height
+    ) {
+        return true;
+    } else {
+        return false;
     }
+}
 //#endregion
 
-// NN Implementation Functions
+// NN Functions
 //#region
-    function newGen() {
-        
-        gen++;
-        reset();
+function newGen() {
+    gen++;
+    reset();
 
-        //spawn new generation
-        for (let i = 0; i < playerCount; i++) {
-            players[i] = new Player(playerX, playerY, playerS, '#FF5858'); 
-            aliveCount += 1;
-        }
-        
+    let j = 0;
+
+    //spawn new generation
+    for (let i = 0; i < playerCount; i++) {
+        players[i] = new Player(playerX, playerY, playerS, "#FF5858");
+        aliveCount++;
+
+        players[i].brain = lastPlayers[RandomIntInRange(0, 75)].brain.copy();
+        players[i].brain.mutate(0.5);
     }
+
+    /*
+    for (let i = 0; i < playerCount / 2 - 2; i++) {
+        // for now, top 50 of each gen create 2 for new gen each with random mutation
+        j += 2;
+
+        players[j].brain = lastPlayers[j].brain.copy();
+        players[j + 1].brain = lastPlayers[j].brain.copy();
+
+        players[j].brain.mutate(0.1);
+        players[j + 1].brain.mutate(0.1);
+
+        players[j].isDead = false;
+        players[j + 1].isDead = false;
+    }
+    */
+
+    for (let i = 0; i < lastPlayers.length; i++) {
+        lastPlayers[i].dispose();
+    }
+    lastPlayers = [];
+}
 //#endregion
 
 function Start() {
-
     //canvas setpu
     canvas.width = 1400;
     canvas.height = 400;
     ctx.font = "20px sans-serif";
 
     //tensor flow setpup
-    tf.setBackend('cpu');
+    tf.setBackend("cpu");
 
     //fps setup
     fpsInterval = 1000 / fps;
@@ -136,12 +167,23 @@ function Start() {
     startTime = then;
 
     //game setup
-    newGen();
+    reset();
+    for (let i = 0; i < playerCount; i++) {
+        players[i] = new Player(playerX, playerY, playerS, "#FF5858");
+        aliveCount++;
+    }
 
     //text setup
     genText = new Text("Generation " + gen, 25, 25, "left", "#212121", "20");
-    genScoreText = new Text("Score " + genScore, 25, 50, "left", "#212121", "20");
-    
+    genScoreText = new Text(
+        "Score: " + genScore,
+        25,
+        50,
+        "left",
+        "#212121",
+        "20"
+    );
+
     requestAnimationFrame(Update);
 }
 
@@ -152,9 +194,8 @@ function Update() {
     elapsed = now - then;
 
     if (elapsed > fpsInterval) {
-
         then = now - (elapsed % fpsInterval);
-        
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         //spawn enemies
@@ -162,7 +203,7 @@ function Update() {
         if (spawnTimer <= 0) {
             spawnObstacle();
             spawnTimer = initialSpawnTimer - gameSpeed * 8;
-            
+
             if (spawnTimer < 60) {
                 spawnTimer = 60;
             }
@@ -180,7 +221,7 @@ function Update() {
             }
         }
 
-        if (aliveCount <= 0) {
+        if (aliveCount == 0) {
             newGen();
         }
 
@@ -188,12 +229,13 @@ function Update() {
             let p = players[i];
 
             if (p.isDead == false) {
-
                 if (obstacles.length != 0) {
                     if (checkCollision(closestObstacle, p)) {
                         p.isDead = true;
-                        p.score = genScore;
-                        aliveCount-=1;
+                        //p.score = genScore;
+                        lastPlayers[playerCount - i - 1] = p;
+                        aliveCount -= 1;
+                        console.log(aliveCount);
                     }
                 }
 

@@ -55,7 +55,9 @@ class NeuralNetwork {
                 weightsCopies[i] = weights[i].clone();
             }
 
-            modelCopy.setWeight(weightsCopies);
+            modelCopy.setWeights;
+
+            modelCopy.setWeights(weightsCopies);
             return new NeuralNetwork(
                 modelCopy,
                 this.inputN,
@@ -76,9 +78,9 @@ class NeuralNetwork {
                 let values = tensor.dataSync().slice();
 
                 for (let j = 0; j < values.length; j++) {
-                    if (random(1) < rate) {
+                    if (Math.random(1) < rate) {
                         let w = values[j];
-                        values[j] = w + randomGaussian();
+                        values[j] = w + randn_bm();
                     }
                 }
 

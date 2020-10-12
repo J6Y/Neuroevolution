@@ -11,10 +11,10 @@ class Player {
         this.jumpTimer = 0;
         this.grounded = false;
 
-        this.score = 0;
+        //this.score = 0;
         this.isDead = false;
 
-        this.brain = new NeuralNetwork(6, 10, 2);
+        this.brain = new NeuralNetwork(6, 15, 2);
     }
 
     dispose() {

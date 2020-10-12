@@ -11,12 +11,14 @@
     let scoreText;
     let highscoreText;
     let genText;
+    let genScoreText;
     let closestObstacle;
 
     // nn variables
     let playerCount = 100;
     let aliveCount = 0;
-    let genNumber = 0;
+    let gen = 0;
+    let genScore;
 
     // game variables
     let spawnTimer;
@@ -72,8 +74,10 @@ class Text {
         spawnTimer = 150;
         gameSpeed = 3;
         obstacles = [];
+        genScore = 0;
     }
 
+    /*
     function set() {
         reset();
 
@@ -82,11 +86,10 @@ class Text {
             highscore = localStorage.getItem('highscore');
         }
 
-        //add score text
-        //scoreText = new Text("Score: " + score, 25, 25, "left", "#212121", "20");
         //highscoreText = new Text("Highscore: " + highscore, canvas.width - 25, 25, "right", "#212121", "20");
 
     }
+    */
 
     function checkCollision(obstacle, player) {
         if (player.x < obstacle.x + obstacle.width && 
@@ -103,26 +106,28 @@ class Text {
 
 // NN Implementation Functions
 //#region
-    function initPlayers() {
+    function newGen() {
+        
+        gen++;
+        reset();
+
+        //spawn new generation
         for (let i = 0; i < playerCount; i++) {
             players[i] = new Player(playerX, playerY, playerS, '#FF5858'); 
             aliveCount += 1;
         }
-    }
-
-    function newGen() {
         
-        genNumber++;
-        
-        initPlayers();
     }
 //#endregion
 
 function Start() {
+
+    //canvas setpu
     canvas.width = 1400;
     canvas.height = 400;
     ctx.font = "20px sans-serif";
 
+    //tensor flow setpup
     tf.setBackend('cpu');
 
     //fps setup
@@ -131,11 +136,11 @@ function Start() {
     startTime = then;
 
     //game setup
-
-    genText = new Text("Generation " + genNumber, 25, 25, "left", "#212121", "20");
-
-    set();
     newGen();
+
+    //text setup
+    genText = new Text("Generation " + gen, 25, 25, "left", "#212121", "20");
+    genScoreText = new Text("Score " + genScore, 25, 50, "left", "#212121", "20");
     
     requestAnimationFrame(Update);
 }
@@ -187,8 +192,8 @@ function Update() {
                 if (obstacles.length != 0) {
                     if (checkCollision(closestObstacle, p)) {
                         p.isDead = true;
+                        p.score = genScore;
                         aliveCount-=1;
-                        console.log(aliveCount);
                     }
                 }
 
@@ -216,8 +221,12 @@ function Update() {
         highscoreText.display();
         */
 
-        genText.t = "Generation " + genNumber;
+        genText.t = "Generation: " + gen;
         genText.display();
+
+        genScore++;
+        genScoreText.t = "Score: " + genScore;
+        genScoreText.display();
 
         gameSpeed += 0.0005;
     }

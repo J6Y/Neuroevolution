@@ -17,13 +17,17 @@ class Player {
         this.brain = new NeuralNetwork(6, 10, 2);
     }
 
+    dispose() {
+        this.brain.dispose();
+    }
+
     jump() {
         if (this.grounded && this.jumpTimer == 0) {
             this.jumpTimer = 1;
             this.dy = -this.jumpForce;
         } else if (this.jumpTimer > 0 && this.jumpTimer < 15) {
             this.jumpTimer++;
-            this.speed = -this.jumpForce - (this.jumpTimer / 50);
+            this.speed = -this.jumpForce - this.jumpTimer / 50;
         }
     }
 
@@ -33,17 +37,17 @@ class Player {
 
     think(obstacle) {
         //#region
-            let inputs = [
-                this.y / canvas.height,
-                this.speed / 10,
-                obstacle.y / canvas.height,
-                obstacle.height / canvas.height,
-                obstacle.width / canvas.width,
-                obstacle.speed / 10           
-            ];
-        //#endregion 
+        let inputs = [
+            this.y / canvas.height,
+            this.speed / 10,
+            obstacle.y / canvas.height,
+            obstacle.height / canvas.height,
+            obstacle.width / canvas.width,
+            obstacle.speed / 10,
+        ];
+        //#endregion
         let output = this.brain.predict(inputs);
-        
+
         if (output[0] > 0.5) {
             this.jump();
         } else {
@@ -57,8 +61,7 @@ class Player {
         }
     }
 
-    update() { 
-        
+    update() {
         this.y += this.speed;
 
         //Gravity
